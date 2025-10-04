@@ -1,5 +1,10 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import path from "node:path";
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { Bucket } from "aws-cdk-lib/aws-s3";
+import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 // import {
 //   IEcsApplicationConstruct,
 //   EcsApplicationConstruct,
@@ -8,18 +13,46 @@ import { Construct } from "constructs";
 //   IS3ReactApplicationConstruct,
 //   S3ReactApplicationConstruct,
 // } from "./constructs/s3ReactApplication.construct";
-// import { eventbridgelambda } from "./constructs/eventbridge-lambda";
+//import { eventbridgelambda } from "./constructs/eventbridge-lambda";
 // import { dynamoDB } from "./constructs/dynamoDB.construct";
-import { cognitoEcsFargate } from "./constructs/cognitoEcsFargate.construct copy";
+//import { cognitoEcsFargate } from "./constructs/cognitoEcsFargate.construct copy";
+//import { sqsDirectIntegration } from "./constructs/sqsDirectIntegration.construct";
 
 export class GscdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    new cognitoEcsFargate(this, 'CognitoEcsFargateConstruct');
+    const bucket = new Bucket(this, "MyFirstBucket", {
+      bucketName: 'my-first-bucket-bbbbb-aaaaa',
+      versioned: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    new BucketDeployment(this, 'DeployMyStringFile', {
+      sources: [Source.data('abc.txt', 'GS CDK!')],
+      destinationBucket: bucket,
+    });
+
+    const fnc = new lambda.Function(this, "GSFunction", {
+      runtime: lambda.Runtime.NODEJS_22_X, // Provide any supported Node.js runtime
+      handler: "index.handler",
+      code: lambda.Code.fromAsset(path.join(__dirname, "..", "..","gsms2","dist")),
+      environment: { BUCKET_ARN: bucket.bucketArn },
+    });
+
+    fnc.addToRolePolicy(
+          new PolicyStatement({
+            actions: ["s3:*"],
+            resources: ["arn:aws:s3:::*"],
+          })
+        );
+
+    //new sqsDirectIntegration(this, 'SqsDirectIntegrationConstruct');
+    //new cognitoEcsFargate(this, 'CognitoEcsFargateConstruct');
 
     // new dynamoDB(this, 'DynamoDBConstruct');
-    // new eventbridgelambda(this, 'EventBridgeLambdaConstruct');
+    //new eventbridgelambda(this, 'EventBridgeLambdaConstruct');
 
     // const ecsApplicationConstructProps: IEcsApplicationConstruct = {
     //   account: this.account,

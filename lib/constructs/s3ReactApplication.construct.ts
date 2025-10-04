@@ -84,10 +84,10 @@ export class S3ReactApplicationConstruct extends Construct {
     });
 
 
-    new BucketDeployment(this, 'DeployMyStringFile', {
-      sources: [Source.data('api.txt', _props.apiUrl)],
-      destinationBucket: bucket,
-    });
+    //new BucketDeployment(this, 'DeployMyStringFile', {
+    //  sources: [Source.data('api.txt', _props.apiUrl)],
+    //  destinationBucket: bucket,
+    //});
 
     new cdk.CfnOutput(this, "CloudFrontDistributionUrl", {
       value: distribution.distributionDomainName,
